@@ -126,6 +126,8 @@ if __name__ == '__main__':
     GC = loader.initialize()
 
     actor_count = 0
+    import numpy as np
+    import torch
     train_count = 0
 
     def actor(batch):
@@ -136,7 +138,20 @@ if __name__ == '__main__':
             random.randint(0, GC.params["num_action"] - 1)
             for i in range(batchsize)
         ]
-        reply = dict(a=actions)
+        values = [
+            random.random()
+            for i in range(batchsize)
+        ]
+        rv =[
+            random.random()
+            for i in range(batchsize)
+        ]
+        pi = torch.from_numpy(np.random.rand(1, batchsize, GC.params["num_action"]))
+
+        reply = dict(a=actions,
+                     V=values,
+                     rv=rv,
+                     pi=pi)
         '''
         data = batch.to_numpy()
         data.update(reply)
@@ -162,32 +177,43 @@ if __name__ == '__main__':
     GC.Start()
 
     import tqdm
-    for _ in tqdm.trange(nIter):
-        b = datetime.now()
-        # Before wait
-        GC.Run()
-        # wake up from wait
-        elapsed_wait_only += (datetime.now() - b).total_seconds() * 1000
+    info = GC.GC.Wait(0)
+    batch = GC.inputs[info.gid].first_k(info.batchsize)
+    import ipdb; ipdb.set_trace()
+    # res = GC._call(batch)
+    numpy_batch = batch.to_numpy()
+    # model
 
-    print(reward_dist)
-    elapsed = (datetime.now() - before).total_seconds() * 1000
-    print("elapsed = %.4lf ms, elapsed_wait_only = %.4lf" %
-          (elapsed, elapsed_wait_only))
-    GC.PrintSummary()
-    GC.Stop()
 
-    # Compute the statistics.
-    per_loop = elapsed / nIter
-    per_wait = elapsed_wait_only / nIter
-    per_frame_loop_n_cpu = per_loop / args.batchsize
-    per_frame_wait_n_cpu = per_wait / args.batchsize
+    GC.GC.Steps(batch)
+    print("done")
+    # for _ in tqdm.trange(nIter):
+    #     b = datetime.now()
+    #     # Before wait
+    #     # import ipdb; ipdb.set_trace()
+    #     GC.Run()
+    #     # wake up from wait
+    #     elapsed_wait_only += (datetime.now() - b).total_seconds() * 1000
 
-    fps_loop = 1000 / per_frame_loop_n_cpu * args.frame_skip
-    fps_wait = 1000 / per_frame_wait_n_cpu * args.frame_skip
+    # print(reward_dist)
+    # elapsed = (datetime.now() - before).total_seconds() * 1000
+    # print("elapsed = %.4lf ms, elapsed_wait_only = %.4lf" %
+    #       (elapsed, elapsed_wait_only))
+    # GC.PrintSummary()
+    # GC.Stop()
 
-    print(
-        "Time[Loop]: %.6lf ms / loop, %.6lf ms / frame_loop_n_cpu, %.2f FPS" %
-        (per_loop, per_frame_loop_n_cpu, fps_loop))
-    print(
-        "Time[Wait]: %.6lf ms / wait, %.6lf ms / frame_wait_n_cpu, %.2f FPS" %
-        (per_wait, per_frame_wait_n_cpu, fps_wait))
+    # # Compute the statistics.
+    # per_loop = elapsed / nIter
+    # per_wait = elapsed_wait_only / nIter
+    # per_frame_loop_n_cpu = per_loop / args.batchsize
+    # per_frame_wait_n_cpu = per_wait / args.batchsize
+
+    # fps_loop = 1000 / per_frame_loop_n_cpu * args.frame_skip
+    # fps_wait = 1000 / per_frame_wait_n_cpu * args.frame_skip
+
+    # print(
+    #     "Time[Loop]: %.6lf ms / loop, %.6lf ms / frame_loop_n_cpu, %.2f FPS" %
+    #     (per_loop, per_frame_loop_n_cpu, fps_loop))
+    # print(
+    #     "Time[Wait]: %.6lf ms / wait, %.6lf ms / frame_wait_n_cpu, %.2f FPS" %
+    #     (per_wait, per_frame_wait_n_cpu, fps_wait))
