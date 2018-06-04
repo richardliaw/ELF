@@ -177,15 +177,16 @@ if __name__ == '__main__':
     GC.Start()
 
     import tqdm
-    info = GC.GC.Wait(0)
-    batch = GC.inputs[info.gid].first_k(info.batchsize)
-    import ipdb; ipdb.set_trace()
-    # res = GC._call(batch)
-    numpy_batch = batch.to_numpy()
-    # model
+    for i in range(30):
+        info = GC.GC.Wait(0)
+        batch = GC.inputs[info.gid].first_k(info.batchsize)
+        # import ipdb; ipdb.set_trace()
+        # res = GC._call(batch)
+        numpy_batch = batch.to_numpy()
+        # model
 
 
-    GC.GC.Steps(batch)
+        GC.GC.Steps(info)
     print("done")
     # for _ in tqdm.trange(nIter):
     #     b = datetime.now()
