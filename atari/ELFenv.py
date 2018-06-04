@@ -36,29 +36,44 @@ class ELFPongEnv():
         args = ArgsProvider.Load(parser, [loader], cmd_line=cmd_line)
         # args = ArgsProvider.Load(parser, [loader], cmd_line=cmd_line)
         self.GCwrapped = loader.initialize()
-
-    def vector_reset(self, vector_width):
-        pass
-
-    def reset_at(self, index):
-        pass
-
-    def vector_step(self, actions):
         infos = self.GCwrapped.GC.Wait(0)
         batch = self.GCwrapped.inputs[infos.gid].first_k(infos.batchsize)
+        self.init_batch = batch.to_numpy()
+
+    def vector_reset(self, vector_width):
+        return self.init_batch['s']
+
+    def reset_at(self, index):
+        return self.init_batch['s'][index] 
+
+    def vector_step(self, actions):
         sel_reply = self.GCwrapped.replies[infos.gid].first_k(batchsize)
+        # TODO: build out a reply
         if isinstance(reply, dict) and sel_reply is not None:
+
             # Current we only support reply to the most recent history.
             batch_key = "%s-%d" % (self.GCwrapped.idx2name[infos.gid], infos.gid)
             sel_reply.copy_from(reply, batch_key=batch_key)
-        # import ipdb; ipdb.set_trace()
-        # res = GC._call(batch)
+        infos = self.GCwrapped.GC.Wait(0)
+        batch = self.GCwrapped.inputs[infos.gid].first_k(infos.batchsize)
         numpy_batch = batch.to_numpy()
-
-        pass
+        return numpy_batch['s'], numpy_batch['r'], numpy_batch['last_terminal'], None
 
     def first_env(self):
         pass
 
+import torch
+from torch import nn
+class Model(nn.Module):
+    def __init__(self, insize, outsize):
+        pass
+
+    def forward(self, invector):
+        return
+
+    def process(self, 
+
 if __name__ == '__main__':
-    ELFPongEnv()
+    env = ELFPongEnv()
+    
+    steps = env.vector_step(actions)

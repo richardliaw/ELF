@@ -73,7 +73,7 @@ class Loader:
         desc["actor"] = dict(
             batchsize=args.batchsize,
             input=dict(T=1, keys=set(["s", "last_r", "last_terminal"])),
-            reply=dict(T=1, keys=set(["rv", "pi", "V", "a"])))
+            reply=dict(T=1, keys=set(["pi", "a"])))
 
         if not args.actor_only:
             # For training: group 1
@@ -149,8 +149,8 @@ if __name__ == '__main__':
         pi = torch.from_numpy(np.random.rand(1, batchsize, GC.params["num_action"]))
 
         reply = dict(a=actions,
-                     V=values,
-                     rv=rv,
+                     #V=values,
+                     #rv=rv,
                      pi=pi)
         '''
         data = batch.to_numpy()
@@ -177,24 +177,23 @@ if __name__ == '__main__':
     GC.Start()
 
     import tqdm
-    for i in range(30):
-        info = GC.GC.Wait(0)
-        batch = GC.inputs[info.gid].first_k(info.batchsize)
-        # import ipdb; ipdb.set_trace()
-        # res = GC._call(batch)
-        numpy_batch = batch.to_numpy()
-        # model
-
-
-        GC.GC.Steps(info)
-    print("done")
-    # for _ in tqdm.trange(nIter):
-    #     b = datetime.now()
-    #     # Before wait
+    # for i in range(30):
+    #     info = GC.GC.Wait(0)
+    #     batch = GC.inputs[info.gid].first_k(info.batchsize)
     #     # import ipdb; ipdb.set_trace()
-    #     GC.Run()
-    #     # wake up from wait
-    #     elapsed_wait_only += (datetime.now() - b).total_seconds() * 1000
+    #     # res = GC._call(batch)
+    #     numpy_batch = batch.to_numpy()
+    #     # model
+
+
+    print("done")
+    for _ in tqdm.trange(nIter):
+        b = datetime.now()
+        # Before wait
+        import ipdb; ipdb.set_trace()
+        GC.Run()
+        # wake up from wait
+        elapsed_wait_only += (datetime.now() - b).total_seconds() * 1000
 
     # print(reward_dist)
     # elapsed = (datetime.now() - before).total_seconds() * 1000
