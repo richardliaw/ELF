@@ -71,9 +71,11 @@ class Model(nn.Module):
     def forward(self, invector):
         return
 
-    def process(self, 
+    def process(self, data):
+        pass
 
 if __name__ == '__main__':
     env = ELFPongEnv()
+    start = env.vector_reset(0)
     
     steps = env.vector_step(actions)
