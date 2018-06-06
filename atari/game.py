@@ -169,7 +169,7 @@ if __name__ == '__main__':
         train_count += 1
 
     GC.reg_callback("actor", actor)
-    GC.reg_callback("train", train)
+    # GC.reg_callback("train", train)
 
     reward_dist = Counter()
 

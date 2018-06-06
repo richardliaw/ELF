@@ -36,9 +36,11 @@ class ELFPongEnv():
         args = ArgsProvider.Load(parser, [loader], cmd_line=cmd_line)
         # args = ArgsProvider.Load(parser, [loader], cmd_line=cmd_line)
         self.GCwrapped = loader.initialize()
-        infos = self.GCwrapped.GC.Wait(0)
-        batch = self.GCwrapped.inputs[infos.gid].first_k(infos.batchsize)
-        self.init_batch = batch.to_numpy()
+        self.GCwrapped.reg_callback("actor", lambda x: 1)
+        self.GCwrapped.start()
+        # infos = self.GCwrapped.GC.Wait(0)
+        # batch = self.GCwrapped.inputs[infos.gid].first_k(infos.batchsize)
+        # self.init_batch = batch.to_numpy()
 
     def vector_reset(self, vector_width):
         return self.init_batch['s']
