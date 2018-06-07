@@ -73,7 +73,7 @@ class Loader:
         desc["actor"] = dict(
             batchsize=args.batchsize,
             input=dict(T=1, keys=set(["s", "last_r", "last_terminal"])),
-            reply=dict(T=1, keys=set(["pi", "a"])))
+            reply=dict(T=1, keys=set(["a"])))
 
         if not args.actor_only:
             # For training: group 1

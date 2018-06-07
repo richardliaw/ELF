@@ -9,6 +9,69 @@ from rlpytorch import Model, ActorCritic
 import torch
 import torch.nn as nn
 
+class VisionNetwork(nn.Module):
+    """Generic vision network"""
+
+    def __init__(self, inputs, num_outputs):
+        """TF visionnet in PyTorch.
+
+        Params:
+            inputs (tuple): (channels, rows/height, cols/width)
+            num_outputs (int): logits size
+        """
+        filters = options.get("conv_filters", [
+            [16, [8, 8], 4],
+            [32, [4, 4], 2],
+            [512, [10, 10], 1],
+        ])
+        layers = []
+        in_channels, in_size = inputs[0], inputs[1:]
+
+        for out_channels, kernel, stride in filters[:-1]:
+            padding, out_size = valid_padding(in_size, kernel,
+                                              [stride, stride])
+            layers.append(
+                SlimConv2d(in_channels, out_channels, kernel, stride, padding))
+            in_channels = out_channels
+            in_size = out_size
+
+        out_channels, kernel, stride = filters[-1]
+        layers.append(
+            SlimConv2d(in_channels, out_channels, kernel, stride, None))
+        self._convs = nn.Sequential(*layers)
+
+        self.logits = SlimFC(
+            out_channels, num_outputs, initializer=nn.init.xavier_uniform_)
+        self.value_branch = SlimFC(
+            out_channels, 1)
+
+    def hidden_layers(self, obs):
+        """ Internal method - pass in torch tensors, not numpy arrays
+
+        args:
+            obs: observations and features"""
+        res = self._convs(obs)
+        res = res.squeeze(3)
+        res = res.squeeze(2)
+        return res
+
+    def forward(self, obs):
+        """Internal method. Implements the
+
+        Args:
+            obs (PyTorch): observations and features
+
+        Return:
+            logits (PyTorch): logits to be sampled from for each state
+            value (PyTorch): value function for each state"""
+        res = self.hidden_layers(obs)
+        logits = self.logits(res)
+        value = self.value_branch(res)
+        return logits, value
+
+
+
+
 class Model_ActorCritic(Model):
     def __init__(self, args):
         super(Model_ActorCritic, self).__init__(args)
@@ -69,7 +132,7 @@ class SlimConv2d(nn.Module):
                  kernel,
                  stride,
                  padding,
-                 initializer=nn.init.xavier_uniform_,
+                 initializer=nn.init.xavier_uniform,
                  activation_fn=nn.ReLU,
                  bias_init=0):
         super(SlimConv2d, self).__init__()
