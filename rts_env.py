@@ -28,12 +28,12 @@ class ELFRTSEnv(VectorEnv):
         os.environ["model"] = "actor_critic"
         os.environ["model_file"] = "./rts/game_MC/model"
         defaults = {
-            'T': 20,
-            'additional_labels': 'id,last_terminal',
+            'T': 1,
+            'additional_labels': 'last_terminal',
             'batchsize': cfg.get("batch", 64),
             'freq_update': 1,
             'num_games': cfg.get("games", 64),
-            'players': 'type=AI_NN,fs=50,args=backup/AI_SIMPLE|start/500|decay/0.99;type=AI_SIMPLE,fs=20',
+            'players': 'type=AI_NN,fs=500,args=backup/AI_SIMPLE|start/500|decay/0.99;type=AI_SIMPLE,fs=20',
             'trainer_stats': 'winrate'}
         env, all_args = load_env(os.environ, trainer=trainer, runner=runner, overrides=defaults)
         self.GCwrapped = env["game"].initialize()
