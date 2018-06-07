@@ -11,7 +11,8 @@ import argparse
 
 from game import Loader
 from rlpytorch import ArgsProvider
-from ray.rllib.utils import VectorEnv
+from ray.rllib.utils.vector_env import VectorEnv
+import gym
 
 # class VectorEnv(object):
 #     @classmethod
@@ -33,7 +34,10 @@ from ray.rllib.utils import VectorEnv
 
 
 class ELFPongEnv(VectorEnv):
-    def __init__(self, cfg):
+    unwrapped = None
+    observation_space = gym.spaces.Box(0, 1, (80, 80, 3))
+    action_space = gym.spaces.Discrete(6)
+    def __init__(self, cfg=dict()):
         parser = argparse.ArgumentParser()
         cmd_line = "--num_games {games} --batchsize {batch}".format(
             games=cfg.get("games", 64),
@@ -42,22 +46,22 @@ class ELFPongEnv(VectorEnv):
         cmd_line = cmd_line.split(" ")
         loader = Loader()
         args = ArgsProvider.Load(parser, [loader], cmd_line=cmd_line)
-        import ipdb; ipdb.set_trace()
         self.GCwrapped = loader.initialize()
         self.GCwrapped.reg_callback("actor", lambda x: 1)
         self.GCwrapped.Start()
         self._last_infos = infos = self.GCwrapped.GC.Wait(0)
         self._bsize = infos.batchsize
         self._last_batch = self.GCwrapped.inputs[infos.gid].first_k(infos.batchsize)
-        self.init_batch = self.process_batch(self._last_batch.to_numpy())
+        self.init_batch = self.process_batch(self._last_batch)
 
-    def process_batch(self, npbatch):
+    def process_batch(self, batch):
+        # import ipdb; ipdb.set_trace()
+        npbatch = batch.to_numpy()
         new_batch = {}
         new_batch['s'] = process_states(npbatch['s'])
         new_batch['last_terminal'] = npbatch['last_terminal'].squeeze()
         new_batch['last_r'] = npbatch['last_r'].squeeze()
         return new_batch
-
 
     def vector_reset(self, vector_width):
         return self.init_batch['s']
@@ -78,17 +82,20 @@ class ELFPongEnv(VectorEnv):
         self.GCwrapped.GC.Steps(self._last_infos)
         self._last_infos = infos = self.GCwrapped.GC.Wait(0)
         self._last_batch = self.GCwrapped.inputs[self._last_infos.gid].first_k(infos.batchsize)
-        numpy_batch = self.process_batch(self._last_batch.to_numpy())
+        numpy_batch = self.process_batch(self._last_batch)
         return numpy_batch['s'], numpy_batch['last_r'], numpy_batch['last_terminal'], None
 
     def first_env(self):
         pass
 
 def process_states(batch):
-    return batch.squeeze(0)[:, :, :80, :]
+    batch = batch.squeeze(0)
+    batch = batch[:, :, :80, :]
+    batch = np.transpose(batch, (0, 2, 3, 1))
+    return batch
 
 if __name__ == '__main__':
-    env = ELFPongEnv()
+    env = ELFPongEnv({})
     start = (env.vector_reset(0))
     env.reset_at(2)
     for i in range(50):
