@@ -29,16 +29,16 @@ def benchmark_gym(env_name):
                 break
     print()
 
-def benchmark_elf(vector_width=64, games=64, env="Pong"):
+def benchmark_elf(vector_width=64, games=64):
     print("--- benchmarking ELFevaluator  ---")
-    from ELFenv import ELFPongEnv, ELFRTSEnv
+    from atari_env import ELFPongEnv
     config = {
         "gamma": 0.99,
         "model": {
             "fcnet_hiddens": [64, 64],
         }
     }
-    elf_env = ELFPongEnv if "Pong" else ELFRTSEnv
+    elf_env = ELFPongEnv
     ev = CommonPolicyEvaluator(
         lambda cfg: elf_env(cfg),
         policy_graph=PGPolicyGraph,
@@ -190,7 +190,7 @@ def benchmark_distributed(
 
 if __name__ == "__main__":
     ray.init(redis_address="localhost:6379")
-    benchmark_elf_single()
+    benchmark_elf()
 #    benchmark_gym("CartPole-v0")
 #    benchmark_gym("PongNoFrameskip-v4")
 #    benchmark_single_core("CartPole-v0", vector_width=128)
